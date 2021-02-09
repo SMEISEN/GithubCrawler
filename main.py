@@ -9,7 +9,7 @@ from datetime import timedelta
 if __name__ == '__main__':
     
     load_dotenv()
-    TOKEN = os.getenv("GITHUB_TOKEN")
+    GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
     g = Github(GITHUB_TOKEN)
 
