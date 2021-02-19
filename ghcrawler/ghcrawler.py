@@ -124,6 +124,49 @@ class GHcrawler:
             else:
                 return None
 
+    def calculate_stats(self, popularity: bool = True, momentum: bool = True, activity: bool = True,
+                        period_divider: int = 4):
+
+        def _calculate_timeperiod(date_2: date, date_0: date, index: int = 1):
+            return date_2 - (date_2 - date_0) / period_divider * index
+
+        for repo_name, repo_data in self.report.items():
+
+            if popularity:
+                self.report[repo_name]['popularity'] = repo_data['star_history']['Stars'].iloc[-1]
+
+            if momentum:
+                date_1 = _calculate_timeperiod(
+                    date_2=repo_data['star_history'].index[-1],
+                    date_0=repo_data['star_history'].index[0]
+                )
+
+                stars_2 = repo_data['star_history'].iloc[-1]['Stars']
+                stars_1 = repo_data['star_history'].iloc[repo_data['star_history'].index.get_loc(
+                    date_1, method='nearest')]['Stars']
+
+                self.report[repo_name]['momentum'] = (stars_2 - stars_1) / stars_1
+
+            if activity:
+                commits_per_period = []
+                commits_1 = 0
+                for i in reversed(range(1, period_divider)):
+                    date_1 = _calculate_timeperiod(
+                        date_2=repo_data['commit_history'].index[-1],
+                        date_0=repo_data['commit_history'].index[0],
+                        index=i
+                    )
+
+                    commits_2 = repo_data['commit_history'].iloc[repo_data['commit_history'].index.get_loc(
+                        date_1, method='nearest')]['Commits']
+
+                    commits_per_period.append(commits_2 - commits_1)
+                    commits_1 = commits_2
+                commits_2 = repo_data['commit_history'].iloc[-1]['Commits']
+                commits_per_period.append(commits_2 - commits_1)
+                average_commits = sum(commits_per_period) / len(commits_per_period)
+                self.report[repo_name]['activity'] = commits_per_period[-1] / average_commits
+
     class _StarCount(_BaseCount):
 
         @staticmethod

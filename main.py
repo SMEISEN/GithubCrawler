@@ -11,6 +11,7 @@ if __name__ == '__main__':
     ghc = GHcrawler(token=GITHUB_TOKEN)
     ghc.fetch_data()
     ghc.plot()
+    ghc.calculate_stats()
 
     results = ghc.report
     print(results)
