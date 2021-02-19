@@ -11,13 +11,15 @@ class GHcrawler:
             self._repositories = ['PyGithub/PyGithub']
         else:
             self._repositories = repositories
-        self.report = dict.fromkeys(self._repositories, {
-            'star_history': pd.DataFrame(),
-            'commit_history': pd.DataFrame(),
+
+        report_values = {
+            'star_history': None,
+            'commit_history': None,
             'popularity': None,
             'momentum': None,
             'activity': None
-        })
+        }
+        self.report = {key: dict(report_values) for key in self._repositories}
 
         self._gh = Github(token)
 
@@ -37,14 +39,14 @@ class GHcrawler:
                     print('\nBeginning with fetching stars!')
                     print('this may take some time...')
 
-                stars = repo.get_stargazers_with_dates()
-                sc = self._StarCount(stars)
+                stars_data = repo.get_stargazers_with_dates()
+                sc = self._StarCount(stars_data)
                 dates, counts = sc.count()
                 df_stars = pd.DataFrame(counts, index=dates, columns=['Stars'])
                 df_stars = df_stars.loc[~df_stars.index.duplicated(keep='last')]
                 df_stars = df_stars.sort_index()
-                result.append(df_stars)
-                self.report[repo_name]['star_history'] = df_stars
+                result.append(df_stars.copy())
+                self.report[repo_name]['star_history'] = result[-1]
                 if verbose:
                     print('Stars successfully fetched!')
 
@@ -52,14 +54,14 @@ class GHcrawler:
                 if verbose:
                     print('\nBeginning with fetching commits!')
                     print('this may take some time...')
-                commits = repo.get_commits().reversed
-                cc = self._CommitCount(commits)
+                commits_data = repo.get_commits().reversed
+                cc = self._CommitCount(commits_data)
                 dates, counts = cc.count()
                 df_commits = pd.DataFrame(counts, index=dates, columns=['Commits'])
                 df_commits = df_commits.loc[~df_commits.index.duplicated(keep='last')]
                 df_commits = df_commits.sort_index()
-                result.append(df_commits)
-                self.report[repo_name]['commit_history'] = df_commits
+                result.append(df_commits.copy())
+                self.report[repo_name]['commit_history'] = result[-1]
                 if verbose:
                     print('Commits successfully fetched!')
 
